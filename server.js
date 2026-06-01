@@ -64,113 +64,84 @@ app.post(
 
             for (const file of req.files) {
 
-                const baseName =
-                    path.parse(
-                        file.originalname
-                    ).name;
+    const baseName = path.parse(file.originalname).name;
+    const ext = path.extname(file.originalname).toLowerCase();
 
-                const rbxmxPath =
-                    `temp_${Date.now()}_${Math.random()
-                        .toString(36)
-                        .slice(2)}.rbxmx`;
+    if (format === "anim") {
 
-                await runLua(
-                    file.path,
-                    rbxmxPath
-                );
+        const animPath =
+            `temp_${Date.now()}_${Math.random()
+                .toString(36)
+                .slice(2)}.anim`;
 
-                if (format === "rbxmx") {
+        if (ext === ".rbxm" || ext === ".rbxmx") {
 
-                    outputs.push({
-                        path: rbxmxPath,
-                        name: baseName + ".rbxmx"
-                    });
-
-                } else {
-
-                    const animPath =
-                        `temp_${Date.now()}_${Math.random()
-                            .toString(36)
-                            .slice(2)}.anim`;
-
-                    await runAnim(
-                        rbxmxPath,
-                        animPath
-                    );
-
-                    outputs.push({
-                        path: animPath,
-                        name: baseName + ".anim"
-                    });
-
-                    try {
-                        fs.unlinkSync(rbxmxPath);
-                    } catch {}
-                }
-
-                try {
-                    fs.unlinkSync(file.path);
-                } catch {}
-            }
-
-            if (outputs.length === 1) {
-
-                const output =
-                    outputs[0];
-
-                return res.download(
-                    output.path,
-                    output.name,
-                    () => {
-                        try {
-                            fs.unlinkSync(
-                                output.path
-                            );
-                        } catch {}
-                    }
-                );
-            }
-
-            const zipName =
-                `result_${Date.now()}.zip`;
-
-            res.setHeader(
-                "Content-Type",
-                "application/zip"
+            await runAnim(
+                file.path,
+                animPath
             );
 
-            res.setHeader(
-                "Content-Disposition",
-                `attachment; filename="${zipName}"`
+        } else {
+
+            const rbxmxPath =
+                `temp_${Date.now()}_${Math.random()
+                    .toString(36)
+                    .slice(2)}.rbxmx`;
+
+            await runLua(
+                file.path,
+                rbxmxPath
             );
 
-            const archive =
-                archiver("zip");
+            await runAnim(
+                rbxmxPath,
+                animPath
+            );
 
-            archive.pipe(res);
+            try {
+                fs.unlinkSync(rbxmxPath);
+            } catch {}
+        }
 
-            for (const file of outputs) {
+        outputs.push({
+            path: animPath,
+            name: baseName + ".anim"
+        });
 
-                archive.file(
-                    file.path,
-                    {
-                        name: file.name
-                    }
-                );
-            }
+    } else {
 
-            archive.finalize();
+        const rbxmxPath =
+            `temp_${Date.now()}_${Math.random()
+                .toString(36)
+                .slice(2)}.rbxmx`;
 
-            archive.on("end", () => {
+        if (ext === ".rbxmx") {
 
-                for (const file of outputs) {
+            outputs.push({
+                path: file.path,
+                name: baseName + ".rbxmx"
+            });
 
-                    try {
-                        fs.unlinkSync(
-                            file.path
-                        );
-                    } catch {}
-                }
+            continue;
+
+        } else {
+
+            await runLua(
+                file.path,
+                rbxmxPath
+            );
+
+            outputs.push({
+                path: rbxmxPath,
+                name: baseName + ".rbxmx"
+            });
+        }
+    }
+
+    try {
+        fs.unlinkSync(file.path);
+    } catch {}
+}
             });
 
         } catch (err) {
