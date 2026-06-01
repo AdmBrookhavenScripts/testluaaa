@@ -162,7 +162,7 @@ app.post(
             }
 
             const zipName =
-                `result_${Date.now()}.zip`;
+                `animconvert_${Date.now()}.zip`;
 
             res.setHeader(
                 "Content-Type",
