@@ -110,7 +110,7 @@ app.post(
 
                 } else {
 
-    if (ext !== ".lua") {
+    if (ext !== "" && ext !== ".lua") {
 
         try {
             fs.unlinkSync(file.path);
