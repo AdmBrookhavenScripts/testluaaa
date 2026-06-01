@@ -64,84 +64,143 @@ app.post(
 
             for (const file of req.files) {
 
-    const baseName = path.parse(file.originalname).name;
-    const ext = path.extname(file.originalname).toLowerCase();
+                const baseName = path.parse(file.originalname).name;
+                const ext = path.extname(file.originalname).toLowerCase();
 
-    if (format === "anim") {
+                if (format === "anim") {
 
-        const animPath =
-            `temp_${Date.now()}_${Math.random()
-                .toString(36)
-                .slice(2)}.anim`;
+                    const animPath =
+                        `temp_${Date.now()}_${Math.random()
+                            .toString(36)
+                            .slice(2)}.anim`;
 
-        if (ext === ".rbxm" || ext === ".rbxmx") {
+                    if (ext === ".rbxm" || ext === ".rbxmx") {
 
-            await runAnim(
-                file.path,
-                animPath
+                        await runAnim(
+                            file.path,
+                            animPath
+                        );
+
+                    } else {
+
+                        const rbxmxPath =
+                            `temp_${Date.now()}_${Math.random()
+                                .toString(36)
+                                .slice(2)}.rbxmx`;
+
+                        await runLua(
+                            file.path,
+                            rbxmxPath
+                        );
+
+                        await runAnim(
+                            rbxmxPath,
+                            animPath
+                        );
+
+                        try {
+                            fs.unlinkSync(rbxmxPath);
+                        } catch {}
+                    }
+
+                    outputs.push({
+                        path: animPath,
+                        name: baseName + ".anim"
+                    });
+
+                } else {
+
+                    const rbxmxPath =
+                        `temp_${Date.now()}_${Math.random()
+                            .toString(36)
+                            .slice(2)}.rbxmx`;
+
+                    if (ext === ".rbxmx") {
+
+                        outputs.push({
+                            path: file.path,
+                            name: baseName + ".rbxmx"
+                        });
+
+                        continue;
+
+                    } else {
+
+                        await runLua(
+                            file.path,
+                            rbxmxPath
+                        );
+
+                        outputs.push({
+                            path: rbxmxPath,
+                            name: baseName + ".rbxmx"
+                        });
+                    }
+                }
+
+                try {
+                    fs.unlinkSync(file.path);
+                } catch {}
+            }
+
+            if (outputs.length === 1) {
+
+                const output =
+                    outputs[0];
+
+                return res.download(
+                    output.path,
+                    output.name,
+                    () => {
+                        try {
+                            fs.unlinkSync(
+                                output.path
+                            );
+                        } catch {}
+                    }
+                );
+            }
+
+            const zipName =
+                `result_${Date.now()}.zip`;
+
+            res.setHeader(
+                "Content-Type",
+                "application/zip"
             );
 
-        } else {
-
-            const rbxmxPath =
-                `temp_${Date.now()}_${Math.random()
-                    .toString(36)
-                    .slice(2)}.rbxmx`;
-
-            await runLua(
-                file.path,
-                rbxmxPath
+            res.setHeader(
+                "Content-Disposition",
+                `attachment; filename="${zipName}"`
             );
 
-            await runAnim(
-                rbxmxPath,
-                animPath
-            );
+            const archive =
+                archiver("zip");
 
-            try {
-                fs.unlinkSync(rbxmxPath);
-            } catch {}
-        }
+            archive.pipe(res);
 
-        outputs.push({
-            path: animPath,
-            name: baseName + ".anim"
-        });
+            for (const file of outputs) {
 
-    } else {
+                archive.file(
+                    file.path,
+                    {
+                        name: file.name
+                    }
+                );
+            }
 
-        const rbxmxPath =
-            `temp_${Date.now()}_${Math.random()
-                .toString(36)
-                .slice(2)}.rbxmx`;
+            archive.finalize();
 
-        if (ext === ".rbxmx") {
+            archive.on("end", () => {
 
-            outputs.push({
-                path: file.path,
-                name: baseName + ".rbxmx"
-            });
+                for (const file of outputs) {
 
-            continue;
-
-        } else {
-
-            await runLua(
-                file.path,
-                rbxmxPath
-            );
-
-            outputs.push({
-                path: rbxmxPath,
-                name: baseName + ".rbxmx"
-            });
-        }
-    }
-
-    try {
-        fs.unlinkSync(file.path);
-    } catch {}
-}
+                    try {
+                        fs.unlinkSync(
+                            file.path
+                        );
+                    } catch {}
+                }
             });
 
         } catch (err) {
