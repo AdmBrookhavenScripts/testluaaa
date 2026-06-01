@@ -1283,7 +1283,6 @@ class RBXModel:
 			return _xml(raw)
 
 def makeverify(raw):
-	print("Creating verify script...")
 	f = open("verify.lua", "rt")
 	script = f.read()
 	f.close()
@@ -1298,7 +1297,6 @@ def makeverify(raw):
 	f.write(script)
 	f.close()
 def convert(inst, output_path):
-	print("Converting instance...")
 	e_style = ["Linear", "Constant", "Elastic", "Cubic", "Bounce", "CubicV2"]
 	e_direc = ["In", "Out", "InOut"]
 	b = io.BytesIO()
@@ -1345,26 +1343,18 @@ def convert(inst, output_path):
 			cf = pose.CFrame or CFrame()
 			for comp in cf.get_components():
 				putfloat(comp)
-	print("Information:")
-	print("  Name: " + inst.Name)
-	print("  Keyframes: " + str(len(kfs)))
-	print("  End Time: " + str(totaltime))
 	b.seek(0, 0)
 	path = output_path
-	print("Saving to " + path + "...")
 	f = open(path, "wb")
 	raw = b.read()
 	f.write(raw)
 	f.close()
-	print("Done.")
 	#makeverify(raw)
 def parsenconvert(path, output_path):
-    print("Reading file...")
     f = open(path, "rb")
     raw = f.read()
     f.close()
 
-    print("Parsing...")
     insts = RBXModel.parse(raw)
 
     assert len(insts) > 0, "Empty RBXM"
@@ -1385,14 +1375,10 @@ def parsenconvert(path, output_path):
 import sys
 
 def main(args):
-    print("RBXM To STEVE's KeyframeSequence file format")
-    print("Hello! I convert RBXM files to STEVE's KeyframeSequence file format.")
-    print("I also know about RBXMX, and I looooove C structs!")
 
     if len(args) >= 3:
         return parsenconvert(args[1], args[2])
 
-    print("Usage: rbxm2anim.py input.rbxmx output.anim")
 
 
 if __name__ == "__main__":
