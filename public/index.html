@@ -119,23 +119,54 @@ form.addEventListener("submit", async (e) => {
     xhr.responseType = "blob";
 
     xhr.onload = () => {
+
+    if (xhr.status !== 200) {
+
+        const reader = new FileReader();
+
+        reader.onload = () => {
+            alert(reader.result);
+
+            progress.value = 0;
+            statusText.innerText = "0%";
+        };
+
+        reader.readAsText(xhr.response);
+
+        return;
+    }
+
     progress.value = 100;
     statusText.innerText = "100%";
 
     const blob = xhr.response;
 
-    const disposition = xhr.getResponseHeader("Content-Disposition");
+    const disposition =
+        xhr.getResponseHeader(
+            "Content-Disposition"
+        );
 
     let filename = "download";
 
     if (disposition) {
-        const match = disposition.match(/filename="?([^"]+)"?/);
-        if (match) filename = match[1];
+
+        const match =
+            disposition.match(
+                /filename="?([^"]+)"?/
+            );
+
+        if (match)
+            filename = match[1];
     }
 
-    const url = window.URL.createObjectURL(blob);
+    const url =
+        window.URL.createObjectURL(
+            blob
+        );
 
-    const a = document.createElement("a");
+    const a =
+        document.createElement("a");
+
     a.href = url;
     a.download = filename;
     a.click();
