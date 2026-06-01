@@ -119,41 +119,34 @@ form.addEventListener("submit", async (e) => {
     xhr.responseType = "blob";
 
     xhr.onload = () => {
-        progress.value = 100;
-        statusText.innerText = "100%";
+    progress.value = 100;
+    statusText.innerText = "100%";
 
-        const blob = xhr.response;
+    const blob = xhr.response;
 
-        const disposition =
-            xhr.getResponseHeader(
-                "Content-Disposition"
-            );
+    const disposition = xhr.getResponseHeader("Content-Disposition");
 
-        let filename = "download";
+    let filename = "download";
 
-        if (disposition) {
-            const match =
-                disposition.match(
-                    /filename="?([^"]+)"?/
-                );
+    if (disposition) {
+        const match = disposition.match(/filename="?([^"]+)"?/);
+        if (match) filename = match[1];
+    }
 
-            if (match) {
-                filename = match[1];
-            }
-        }
+    const url = window.URL.createObjectURL(blob);
 
-        const url =
-            window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
 
-        const a =
-            document.createElement("a");
+    URL.revokeObjectURL(url);
 
-        a.href = url;
-        a.download = filename;
-        a.click();
-
-        URL.revokeObjectURL(url);
-    };
+    setTimeout(() => {
+        progress.value = 0;
+        statusText.innerText = "0%";
+    }, 800);
+};
 
     xhr.send(data);
 });
