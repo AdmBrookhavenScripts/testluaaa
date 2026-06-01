@@ -110,33 +110,34 @@ app.post(
 
                 } else {
 
-                    const rbxmxPath =
-                        `temp_${Date.now()}_${Math.random()
-                            .toString(36)
-                            .slice(2)}.rbxmx`;
+    if (ext !== ".lua") {
 
-                    if (ext === ".rbxmx") {
+        try {
+            fs.unlinkSync(file.path);
+        } catch {}
 
-                        outputs.push({
-                            path: file.path,
-                            name: baseName + ".rbxmx"
-                        });
+        return res
+            .status(400)
+            .send(
+                "Only .lua files can be converted to RBXMX"
+            );
+    }
 
-                        continue;
+    const rbxmxPath =
+        `temp_${Date.now()}_${Math.random()
+            .toString(36)
+            .slice(2)}.rbxmx`;
 
-                    } else {
+    await runLua(
+        file.path,
+        rbxmxPath
+    );
 
-                        await runLua(
-                            file.path,
-                            rbxmxPath
-                        );
-
-                        outputs.push({
-                            path: rbxmxPath,
-                            name: baseName + ".rbxmx"
-                        });
-                    }
-                }
+    outputs.push({
+        path: rbxmxPath,
+        name: baseName + ".rbxmx"
+    });
+}
 
                 try {
                     fs.unlinkSync(file.path);
