@@ -17,12 +17,13 @@ const upload = multer({
 function runLua(input, output) {
     return new Promise((resolve, reject) => {
         execFile(
-            "lua",
-            [
-                "lua2rbxmxv2.lua",
-                input,
-                output
-            ],
+    "lua",
+    [
+        "lua2rbxmxv2.lua",
+        input,
+        output
+    ],
+    { stdio: "ignore", maxBuffer: 1024 * 1024 * 50 },
             (err) => {
                 if (err) return reject(err);
                 resolve();
@@ -34,12 +35,13 @@ function runLua(input, output) {
 function runAnim(input, output) {
     return new Promise((resolve, reject) => {
         execFile(
-            "python3",
-            [
-                "rbxm2anim.py",
-                input,
-                output
-            ],
+    "python3",
+    [
+        "rbxm2anim.py",
+        input,
+        output
+    ],
+    { stdio: "ignore", maxBuffer: 1024 * 1024 * 50 },
             (err) => {
                 if (err) return reject(err);
                 resolve();
