@@ -2,12 +2,8 @@
 local filename = arg[1]
 local func, err = loadfile(filename)
 if not func then
-    print("Error to load file: " .. tostring(err))
-    return
+    error("Failed to load file: " .. tostring(err))
 end
-
-print("FUNC:", func)
-print("ERROR:", err)
 local env = {}
 setmetatable(env, {__index = _G})
 debug.setupvalue(func, 1, env)
@@ -140,7 +136,6 @@ env.task = {
         return nil
     end,
 }
-print("Running file...")
 local ks = func()
 local e_style = {"Linear", "Constant", "Elastic", "Cubic", "Bounce", "CubicV2"}
 local e_direc = {"In", "Out", "InOut"}
@@ -176,7 +171,6 @@ end
 local instcount = 0
 local function serialize(inst)
 	instcount = instcount + 1
-	print("Converting instances: " .. instcount .. "/" .. #insts .. "; " .. (math.floor((instcount / #insts) * 10000) / 100) .. "%")
 	append("<Item class=\"" .. inst.ClassName .. "\" referent=\"" .. genreferent() .. "\">")
 	append("<Properties>")
 	append("<BinaryString name=\"AttributesSerialize\"></BinaryString><SecurityCapabilities name=\"Capabilities\">0</SecurityCapabilities><bool name=\"DefinesCapabilities\">false</bool><string name=\"Name\">" .. inst.Name .. "</string><int64 name=\"SourceAssetId\">-1</int64><BinaryString name=\"Tags\"></BinaryString>")
@@ -211,7 +205,10 @@ end
 end
 serialize(ks)
 append("</roblox>")
-local output = arg[2] or "lua2rbxmx.rbxmx"
+local output = arg[2]
+if not output then
+    error("No output path provided")
+end
 local file = io.open(output, "w")
 file:write(table.concat(xml, ""))
 file:close()
