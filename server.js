@@ -50,6 +50,26 @@ function runAnim(input, output) {
     });
 }
 
+function runAnimInfo(input) {
+    return new Promise((resolve, reject) => {
+        execFile(
+            "python3",
+            [
+                "animinfo.py",
+                input
+            ],
+            {
+                stdio: "pipe",
+                maxBuffer: 1024 * 1024 * 10
+            },
+            (err, stdout) => {
+                if (err) return reject(err);
+                resolve(stdout.trim());
+            }
+        );
+    });
+}
+
 app.post(
     "/convert",
     upload.array("files"),
@@ -217,6 +237,105 @@ app.post(
             return res
                 .status(500)
                 .send(err.toString());
+        }
+    }
+);
+
+app.post(
+    "/anim-info",
+    upload.array("files"),
+    async (req, res) => {
+
+        const results = [];
+
+        try {
+
+            for (const file of req.files) {
+
+                if (
+                    path.extname(
+                        file.originalname
+                    ).toLowerCase() !== ".anim"
+                ) {
+
+                    try {
+                        fs.unlinkSync(file.path);
+                    } catch {}
+
+                    return res
+                        .status(400)
+                        .send(
+                            "Only .anim files are allowed"
+                        );
+                }
+
+                const output =
+                    await runAnimInfo(
+                        file.path
+                    );
+
+                let name = "";
+                let duration = "";
+
+                const lines =
+                    output.split("\n");
+
+                for (const line of lines) {
+
+                    if (
+                        line.startsWith(
+                            "Name:"
+                        )
+                    ) {
+                        name =
+                            line
+                                .replace(
+                                    "Name:",
+                                    ""
+                                )
+                                .trim();
+                    }
+
+                    if (
+                        line.startsWith(
+                            "Duration:"
+                        )
+                    ) {
+                        duration =
+                            line
+                                .replace(
+                                    "Duration:",
+                                    ""
+                                )
+                                .trim();
+                    }
+                }
+
+                results.push({
+                    file:
+                        file.originalname,
+                    name,
+                    duration
+                });
+
+                try {
+                    fs.unlinkSync(
+                        file.path
+                    );
+                } catch {}
+            }
+
+            res.json(results);
+
+        } catch (err) {
+
+            console.error(err);
+
+            res
+                .status(500)
+                .send(
+                    err.toString()
+                );
         }
     }
 );
