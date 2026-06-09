@@ -2,10 +2,14 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta
+name="viewport"
+content="width=device-width, initial-scale=1.0">
+
 <title>Lua → RBXMX / ANIM</title>
 
 <style>
+
 body{
     margin:0;
     font-family:Arial,sans-serif;
@@ -24,6 +28,26 @@ body{
 
 h1{
     text-align:center;
+}
+
+.tabs{
+    display:flex;
+    gap:8px;
+    margin-bottom:12px;
+}
+
+.tab{
+    flex:1;
+    border:none;
+    padding:12px;
+    border-radius:8px;
+    cursor:pointer;
+    background:#ddd;
+}
+
+.tab.active{
+    background:#2d6cdf;
+    color:white;
 }
 
 input,
@@ -57,6 +81,20 @@ progress{
     text-align:center;
     margin-top:10px;
 }
+
+.animCard{
+    background:white;
+    padding:12px;
+    margin-top:10px;
+    border-radius:8px;
+    border:1px solid #ddd;
+    word-break:break-word;
+}
+
+#animResults{
+    margin-top:10px;
+}
+
 </style>
 </head>
 <body>
@@ -65,122 +103,379 @@ progress{
 
 <h1>Lua → RBXMX / ANIM</h1>
 
+<div class="tabs">
+
+<button
+class="tab active"
+data-tab="convert">
+Converter
+</button>
+
+<button
+class="tab"
+data-tab="anim">
+Check .anim Time
+</button>
+
+</div>
+
+<div id="convertTab">
+
 <form id="uploadForm">
 
 <input
-    type="file"
-    name="files"
-    accept=".lua"
-    multiple
-    required>
+type="file"
+name="files"
+accept=".lua,.rbxm,.rbxmx"
+multiple
+required>
 
 <select name="format">
-    <option value="rbxmx">RBXMX</option>
-    <option value="anim">ANIM</option>
+
+<option value="rbxmx">
+RBXMX
+</option>
+
+<option value="anim">
+ANIM
+</option>
+
 </select>
 
 <button type="submit">
-    Converter
+Converter
 </button>
 
 </form>
 
-<progress id="progress" value="0" max="100"></progress>
+<progress
+id="progress"
+value="0"
+max="100">
+</progress>
 
-<div id="status">0%</div>
+<div id="status">
+0%
+</div>
+
+</div>
+
+<div
+id="animTab"
+style="display:none">
+
+<form id="animForm">
+
+<input
+type="file"
+name="files"
+accept=".anim"
+multiple
+required>
+
+<button type="submit">
+Check Duration
+</button>
+
+</form>
+
+<div id="animResults"></div>
+
+</div>
 
 </div>
 
 <script>
-const form = document.getElementById("uploadForm");
-const progress = document.getElementById("progress");
-const statusText = document.getElementById("status");
 
-form.addEventListener("submit", async (e) => {
-    e.preventDefault();
+const form =
+document.getElementById(
+    "uploadForm"
+);
 
-    const data = new FormData(form);
+const progress =
+document.getElementById(
+    "progress"
+);
 
-    const xhr = new XMLHttpRequest();
+const statusText =
+document.getElementById(
+    "status"
+);
 
-    xhr.open("POST", "/convert");
+form.addEventListener(
+    "submit",
+    async (e)=>{
 
-    xhr.upload.onprogress = (e) => {
-        if (!e.lengthComputable) return;
+        e.preventDefault();
 
-        const percent = Math.round(
-            (e.loaded / e.total) * 50
+        const data =
+            new FormData(form);
+
+        const xhr =
+            new XMLHttpRequest();
+
+        xhr.open(
+            "POST",
+            "/convert"
         );
 
-        progress.value = percent;
-        statusText.innerText = percent + "%";
-    };
+        xhr.upload.onprogress =
+        (e)=>{
 
-    xhr.responseType = "blob";
+            if(
+                !e.lengthComputable
+            ) return;
 
-    xhr.onload = () => {
+            const percent =
+                Math.round(
+                    (
+                        e.loaded /
+                        e.total
+                    ) * 50
+                );
 
-    if (xhr.status !== 200) {
+            progress.value =
+                percent;
 
-        const reader = new FileReader();
-
-        reader.onload = () => {
-            alert(reader.result);
-
-            progress.value = 0;
-            statusText.innerText = "0%";
+            statusText.innerText =
+                percent + "%";
         };
 
-        reader.readAsText(xhr.response);
+        xhr.responseType =
+            "blob";
 
-        return;
-    }
+        xhr.onload = ()=>{
 
-    progress.value = 100;
-    statusText.innerText = "100%";
+            if(
+                xhr.status !== 200
+            ){
 
-    const blob = xhr.response;
+                const reader =
+                    new FileReader();
 
-    const disposition =
-        xhr.getResponseHeader(
-            "Content-Disposition"
-        );
+                reader.onload =
+                ()=>{
 
-    let filename = "download";
+                    alert(
+                        reader.result
+                    );
 
-    if (disposition) {
+                    progress.value =
+                        0;
 
-        const match =
-            disposition.match(
-                /filename="?([^"]+)"?/
+                    statusText.innerText =
+                        "0%";
+                };
+
+                reader.readAsText(
+                    xhr.response
+                );
+
+                return;
+            }
+
+            progress.value =
+                100;
+
+            statusText.innerText =
+                "100%";
+
+            const blob =
+                xhr.response;
+
+            const disposition =
+                xhr.getResponseHeader(
+                    "Content-Disposition"
+                );
+
+            let filename =
+                "download";
+
+            if(disposition){
+
+                const match =
+                    disposition.match(
+                        /filename="?([^"]+)"?/
+                    );
+
+                if(match)
+                    filename =
+                        match[1];
+            }
+
+            const url =
+                URL.createObjectURL(
+                    blob
+                );
+
+            const a =
+                document.createElement(
+                    "a"
+                );
+
+            a.href = url;
+            a.download =
+                filename;
+
+            a.click();
+
+            URL.revokeObjectURL(
+                url
             );
 
-        if (match)
-            filename = match[1];
+            setTimeout(()=>{
+
+                progress.value =
+                    0;
+
+                statusText.innerText =
+                    "0%";
+
+            },800);
+        };
+
+        xhr.send(data);
     }
+);
 
-    const url =
-        window.URL.createObjectURL(
-            blob
-        );
+const tabs =
+document.querySelectorAll(
+    ".tab"
+);
 
-    const a =
-        document.createElement("a");
+const convertTab =
+document.getElementById(
+    "convertTab"
+);
 
-    a.href = url;
-    a.download = filename;
-    a.click();
+const animTab =
+document.getElementById(
+    "animTab"
+);
 
-    URL.revokeObjectURL(url);
+tabs.forEach(btn=>{
 
-    setTimeout(() => {
-        progress.value = 0;
-        statusText.innerText = "0%";
-    }, 800);
-};
+    btn.addEventListener(
+        "click",
+        ()=>{
 
-    xhr.send(data);
+            tabs.forEach(
+                t=>
+                t.classList.remove(
+                    "active"
+                )
+            );
+
+            btn.classList.add(
+                "active"
+            );
+
+            if(
+                btn.dataset.tab
+                ===
+                "convert"
+            ){
+
+                convertTab.style.display =
+                    "block";
+
+                animTab.style.display =
+                    "none";
+
+            }else{
+
+                convertTab.style.display =
+                    "none";
+
+                animTab.style.display =
+                    "block";
+            }
+        }
+    );
 });
+
+const animForm =
+document.getElementById(
+    "animForm"
+);
+
+const animResults =
+document.getElementById(
+    "animResults"
+);
+
+animForm.addEventListener(
+    "submit",
+    async (e)=>{
+
+        e.preventDefault();
+
+        const data =
+            new FormData(
+                animForm
+            );
+
+        animResults.innerHTML =
+            "Loading...";
+
+        try{
+
+            const res =
+                await fetch(
+                    "/anim-info",
+                    {
+                        method:"POST",
+                        body:data
+                    }
+                );
+
+            if(!res.ok){
+
+                alert(
+                    await res.text()
+                );
+
+                animResults.innerHTML =
+                    "";
+
+                return;
+            }
+
+            const json =
+                await res.json();
+
+            animResults.innerHTML =
+                "";
+
+            json.forEach(
+                anim=>{
+
+                    animResults.innerHTML += `
+<div class="animCard">
+<b>${anim.file}</b>
+<br><br>
+Name:
+${anim.name}
+<br>
+Duration:
+${anim.duration}
+</div>
+`;
+                }
+            );
+
+        }catch(err){
+
+            alert(
+                err.toString()
+            );
+
+            animResults.innerHTML =
+                "";
+        }
+    }
+);
+
 </script>
 
 </body>
