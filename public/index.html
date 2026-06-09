@@ -75,6 +75,7 @@ button:hover{
 progress{
     width:100%;
     height:25px;
+    display:none;
 }
 
 #status{
@@ -207,6 +208,9 @@ form.addEventListener(
     async (e)=>{
 
         e.preventDefault();
+        progress.style.display = "block";
+        progress.value = 0;
+        statusText.innerText = "0%";
 
         const data =
             new FormData(form);
@@ -263,8 +267,8 @@ form.addEventListener(
                     progress.value =
                         0;
 
-                    statusText.innerText =
-                        "0%";
+                    statusText.innerText = "";
+                    progress.style.display = "none";
                 };
 
                 reader.readAsText(
@@ -325,11 +329,9 @@ form.addEventListener(
 
             setTimeout(()=>{
 
-                progress.value =
-                    0;
-
-                statusText.innerText =
-                    "0%";
+            progress.value = 0;
+            statusText.innerText = "";
+            progress.style.display = "none";
 
             },800);
         };
